@@ -1,0 +1,13 @@
+# 📘 Auto-Generated Documentation
+
+{% for func in functions %}
+---
+
+## 🔹 `{{ func.name }}({{ func.args | join(', ') }})`
+
+**📄 Defined in:** `{{ func.file }}`
+
+**📝 Description:**
+{{ func.docstring }}
+
+{% endfor %}

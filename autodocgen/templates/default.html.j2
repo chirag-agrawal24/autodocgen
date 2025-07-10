@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AutoDocGen - Documentation</title>
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        h1 {
+            color: #0066cc;
+        }
+        .function-block {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            padding: 20px;
+        }
+        .function-block h2 {
+            color: #333;
+        }
+        .file-name {
+            font-size: 0.9em;
+            color: #777;
+        }
+        pre {
+            background: #f0f0f0;
+            padding: 10px;
+            overflow-x: auto;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+    <h1>📘 Auto-Generated Documentation</h1>
+
+    {% for func in functions %}
+    <div class="function-block">
+        <h2>🔹 {{ func.name }}({{ func.args | join(', ') }})</h2>
+        <div class="file-name">📄 Defined in: <code>{{ func.file }}</code></div>
+        <h4>📝 Description:</h4>
+        <pre>{{ func.docstring }}</pre>
+    </div>
+    {% endfor %}
+</body>
+</html>
