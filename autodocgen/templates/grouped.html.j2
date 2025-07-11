@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Documentation - {{ file_path }}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; line-height: 1.6; }
+    h1 { color: #333; }
+    h2, h3 { color: #0056b3; margin-top: 1.5rem; }
+    .code-block { background: #f4f4f4; padding: 0.5rem; border-radius: 4px; }
+    blockquote { font-style: italic; color: #555; margin-left: 1rem; }
+  </style>
+</head>
+<body>
+
+  <h1>{{ file_path }}</h1>
+  <blockquote>{{ file_description }}</blockquote>
+
+  {% for item in items %}
+    <hr>
+
+    {% if item.type == "class" %}
+      <h2>Class: {{ item.name }}</h2>
+      <p>{{ item.docstring | markdown }}</p>
+
+      {% for method in item.methods %}
+        <h3>Method: {{ method.name }}</h3>
+        <p><strong>Arguments:</strong> {{ method.args }}</p>
+        <p><strong>Returns:</strong> {{ method.returns or "None" }}</p>
+        <div class="code-block">
+          {{ method.docstring | markdown }}
+        </div>
+      {% endfor %}
+
+    {% elif item.type == "function" %}
+      <h2>Function: {{ item.name }}</h2>
+      <p><strong>Arguments:</strong> {{ item.args }}</p>
+      <p><strong>Returns:</strong> {{ item.returns or "None" }}</p>
+      <div class="code-block">
+        {{ item.docstring | markdown }}
+      </div>
+    {% endif %}
+  {% endfor %}
+
+</body>
+</html>

@@ -1,0 +1,28 @@
+# {{ file_path }}
+
+> {{ file_description }}
+
+{% for item in items %}
+---
+
+{% if item.type == "class" %}
+## Class: `{{ item.name }}`
+
+{{ item.docstring }}
+
+{% for method in item.methods %}
+### Method: `{{ method.name }}`
+- **Arguments**: {{ method.args }}
+- **Returns**: {{ method.returns or "None" }}
+
+{{ method.docstring }}
+{% endfor %}
+
+{% elif item.type == "function" %}
+## Function: `{{ item.name }}`
+- **Arguments**: {{ item.args }}
+- **Returns**: {{ item.returns or "None" }}
+
+{{ item.docstring }}
+{% endif %}
+{% endfor %}

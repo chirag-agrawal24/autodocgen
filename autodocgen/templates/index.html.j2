@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Documentation Index</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; }
+    h1 { color: #222; }
+    ul { list-style-type: none; padding: 0; }
+    li { margin-bottom: 1rem; }
+    a { font-weight: bold; color: #0056b3; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .desc { margin-left: 1rem; font-style: italic; color: #555; }
+  </style>
+</head>
+<body>
+
+  <h1>📘 Project Documentation Index</h1>
+
+  <ul>
+    {% for path, items in grouped.items() %}
+      <li>
+        <a href="{{ path | replace('.py', '.html') }}">{{ path }}</a>
+        <div class="desc">{{ file_descriptions.get(path, "No description available.") | markdown }}</div>
+      </li>
+    {% endfor %}
+  </ul>
+
+</body>
+</html>

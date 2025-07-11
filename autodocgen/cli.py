@@ -1,33 +1,62 @@
-import click
+import argparse
 import os
+import sys
 
-from .parser import parse_python_files
-from .generator import generate_docs
+from autodocgen.runner import run_documentation_tool
 
-@click.command()
-@click.option('--input', '-i', 'input_dir', required=True, help='Path to directory with .py files')
-@click.option('--output', '-o', 'output_dir', default='docs', show_default=True, help='Output directory for documentation')
-@click.option('--format', '-f', 'doc_format', type=click.Choice(['markdown', 'html']), default='markdown', show_default=True, help='Output format')
-@click.option('--use-ai', is_flag=True, help='Use AI (Groq) to generate missing docstrings')
-def main(input_dir, output_dir, doc_format, use_ai):
-    """📘 AutoDocGen: Generate documentation from Python code"""
-    click.echo("🚀 Starting AutoDocGen...")
 
-    if not os.path.isdir(input_dir):
-        click.echo("❌ Input directory does not exist.")
-        return
+def main():
+    parser = argparse.ArgumentParser(description="📘 Generate documentation from Python source code.")
+    subparsers = parser.add_subparsers(dest="command")
 
-    os.makedirs(output_dir, exist_ok=True)
+    # CLI Mode
+    cli_parser = subparsers.add_parser("run", help="Run in CLI mode")
+    cli_parser.add_argument("--path", type=str, required=True, help="Path to the Python project directory.")
+    cli_parser.add_argument("--output-dir", type=str, default="docs", help="Directory to write the documentation.")
+    cli_parser.add_argument("--fmt", choices=["markdown", "html"], default="markdown", help="Output format.")
+    cli_parser.add_argument("--use-ai", action="store_true", help="Use AI to generate docstrings and file summaries.")
+    cli_parser.add_argument("--pdf", action="store_true", help="Export HTML docs to PDF.")
+    cli_parser.add_argument("--readme", action="store_true", help="Generate README.md for the project.")
+    cli_parser.add_argument("--inject-docs", action="store_true", help="Inject AI-generated docstrings into code.")
+    cli_parser.add_argument("--inplace", action="store_true", help="Modify original source files (DANGEROUS).")
+    cli_parser.add_argument("--force", action="store_true", help="Force overwrite existing docstrings.")
+    cli_parser.add_argument("--diff", action="store_true", help="Show diff of injected docstrings.")
 
-    # Step 1: Parse all Python files
-    click.echo(f"🔍 Parsing Python files in: {input_dir}")
-    functions = parse_python_files(input_dir, use_ai=use_ai)
+    # GUI Mode
+    subparsers.add_parser("gui", help="Launch the GUI")
 
-    # Step 2: Generate Documentation
-    click.echo(f"📝 Generating {doc_format} documentation...")
-    generate_docs(functions, output_dir, fmt=doc_format)
+    args = parser.parse_args()
 
-    click.echo("✅ Done!")
+    if args.command == "gui":
+        from autodocgen.gui_app import launch
+        launch()
+
+    elif args.command == "run":
+        project_path = os.path.abspath(args.path)
+        output_dir = os.path.abspath(args.output_dir)
+
+        if not os.path.exists(project_path):
+            print(f"❌ Error: path '{project_path}' does not exist.")
+            sys.exit(1)
+
+        os.makedirs(output_dir, exist_ok=True)
+
+        run_documentation_tool({
+            "path": project_path,
+            "output": output_dir,
+            "fmt": args.fmt,
+            "use_ai": args.use_ai,
+            "pdf": args.pdf,
+            "readme": args.readme,
+            "inject_docs": args.inject_docs,
+            "inplace": args.inplace,
+            "force": args.force,
+            "diff": args.diff,
+        }, logger=print)
+
+    else:
+        parser.print_help()
+
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,6 @@
+# 📘 Project Documentation Index
+
+{% for path, items in grouped.items() %}
+## [{{ path }}]({{ path | replace(".py", ".md") }})
+  > {{ file_descriptions.get(path, "No description available.") }}
+{% endfor %}

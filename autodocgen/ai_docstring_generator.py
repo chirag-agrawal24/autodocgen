@@ -15,6 +15,29 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 
+def generate_file_description_ai(code: str, model="meta-llama/llama-4-scout-17b-16e-instruct") -> str:
+    if not GROQ_API_KEY:
+        return "No description available (GROQ_API_KEY not set)."
+
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "messages": [
+            {"role": "system", "content": "You're an assistant that summarizes Python files."},
+            {"role": "user", "content": f"Summarize what this Python file does:\n\n{code}"}
+        ],
+        "model": model
+    }
+
+    response = requests.post("https://api.groq.com/openai/v1/chat/completions", json=data, headers=headers)
+    if response.ok:
+        return response.json()["choices"][0]["message"]["content"].strip()
+    return "AI summary failed."
+
+
 def generate_docstring(function_name, args, file_context=None, model="meta-llama/llama-4-scout-17b-16e-instruct"):
     prompt = f"""
 Generate a concise, readable Python docstring for the following function:
@@ -50,3 +73,58 @@ Respond with only the docstring content (no quotes or formatting).
     except Exception as e:
         print(f"❌ Groq AI docstring generation failed: {e}")
         return None
+
+
+import os
+import requests
+
+def generate_readme_with_ai(project_path, file_descriptions,model="meta-llama/llama-4-scout-17b-16e-instruct" ):
+    # Prepare basic input for AI
+    file_summary = "\n".join(
+        f"- {os.path.relpath(path, project_path)}: {desc}"
+        for path, desc in file_descriptions.items()
+    )
+
+    prompt = f"""
+You are a helpful documentation generator. Create a clear, professional, and well-structured README.md for the following project.
+
+Project Description:
+This project includes auto-generated documentation for a Python codebase.
+
+Files:
+{file_summary}
+
+Include sections:
+- Project Overview
+- Module Descriptions
+- How to Regenerate Documentation (include this command):
+  python -m yourdocgen.cli --path . --output-dir docs --fmt html --use-ai --pdf --readme
+
+Format it in markdown.
+"""
+
+    # Call Groq API
+    try:
+        completion = client.chat.completions.create(
+        model=model,
+        messages=[
+        {
+            "role": "user",
+            "content": prompt
+        }
+        ],
+        temperature=1,
+        max_completion_tokens=1024,
+        top_p=1,
+        stream=False,
+        stop=None,
+        )
+
+        response_str = completion.choices[0].message.content or ""
+
+        
+        return response_str.strip()
+    except Exception as e:
+        print(f"❌ Groq AI README generation failed: {e}")
+        return ""    
+    
