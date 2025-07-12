@@ -135,27 +135,46 @@ class AutoDocGUI:
             func["docstring"] = self.generated_docstrings.get(key, "")
 
         for filepath in set(k.split("::")[0] for k in self.functions):
-            related_funcs = {
-                k.split("::")[1]: self.functions[k]["docstring"]
+            related_funcs = [
+                {
+                    "name": k.split("::")[1],
+                    "docstring": self.functions[k]["docstring"]
+                }
                 for k in self.functions
                 if k.startswith(filepath + "::") and k not in self.rejected_funcs
-            }
-            output_file = os.path.join(self.output_path.get(), os.path.relpath(filepath, start=self.project_path.get()))
-            inject_into_file(filepath, dest_path=output_file, force=True, show_diff=False, in_memory_funcs=related_funcs)
+            ]
+            relative_path = os.path.relpath(filepath, start=self.project_path.get())
+            output_file = os.path.join(self.output_path.get(), "code", relative_path)
+            inject_into_file(
+                filepath,
+                dest_path=output_file,
+                force=True,
+                show_diff=False,
+                in_memory_funcs=related_funcs
+            )
 
         messagebox.showinfo("Success", "✅ Docstrings injected and saved!")
 
     def generate_docs(self, fmt="html"):
         from autodocgen.parser import parse_python_files
         project = self.project_path.get()
-        output = self.output_path.get()
+        output = os.path.join(self.output_path.get(), "project_docs")
+        os.makedirs(os.path.dirname(output), exist_ok=True)
         grouped, descriptions = parse_python_files(project, use_ai=True)
         generate_docs(grouped, descriptions, output, fmt=fmt)
         messagebox.showinfo("Done", f"📘 {fmt.upper()} documentation generated!")
 
     def generate_pdf(self):
-        self.generate_docs("html")
-        export_pdf(self.output_path.get())
+        output_path = os.path.join(self.output_path.get(), "project_docs")
+        output_html_path = os.path.join(output_path, "index.html")
+
+        # Generate HTML only if it doesn't exist
+        if not os.path.exists(output_html_path):
+            self.generate_docs("html")
+        
+        os.makedirs(output_path, exist_ok=True)
+
+        export_pdf(output_path)
         messagebox.showinfo("PDF", "📄 PDF generated!")
 
     def generate_readme(self):
@@ -187,10 +206,16 @@ class AutoDocGUI:
 
         def save_readme():
             content = text_editor.get("1.0", "end").strip()
-            readme_path = os.path.join(project, "README.md")
-            with open(readme_path, "w", encoding="utf-8") as f:
-                f.write(content)
-            messagebox.showinfo("Saved", f"✅ README.md saved at {readme_path}")
+            readme_paths = [
+                os.path.join(project, "README.md"),
+                os.path.join(output, "project_docs","README.md")
+            ]
+            for path in readme_paths:
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                with open(path, "w", encoding="utf-8") as f:
+                    f.write(content)
+
+            messagebox.showinfo("Saved", f"✅ README.md saved at {readme_paths[0]} and {readme_paths[1]}")
             win.destroy()
 
         button_frame = tk.Frame(win)
