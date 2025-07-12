@@ -3,7 +3,9 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from autodocgen.parser import parse_python_files
 from autodocgen.generator import generate_docs, export_pdf, generate_readme
+from autodocgen.ai_docstring_generator import generate_readme_with_ai
 from autodocgen.inject_docstrings import inject_into_file
+from tkhtmlview import HTMLLabel
 
 class AutoDocGUI:
     def __init__(self, root):
@@ -37,6 +39,7 @@ class AutoDocGUI:
         tk.Button(middle_frame, text="📄 Generate HTML", command=lambda: self.generate_docs("html")).pack(side="left", padx=5)
         tk.Button(middle_frame, text="📝 Generate Markdown", command=lambda: self.generate_docs("markdown")).pack(side="left", padx=5)
         tk.Button(middle_frame, text="📘 Generate PDF", command=self.generate_pdf).pack(side="left", padx=5)
+        tk.Button(middle_frame, text="📖 Generate README", command=self.generate_readme).pack(side="left", padx=5)
 
         self.main_pane = tk.PanedWindow(self.root, orient="horizontal")
         self.main_pane.pack(fill="both", expand=True, padx=10, pady=5)
@@ -64,7 +67,7 @@ class AutoDocGUI:
         # Save actions
         save_frame = tk.Frame(self.right_frame)
         save_frame.pack(fill="x", pady=5)
-        tk.Button(save_frame, text="❌ Reject This", command=self.reject_current_docstring).pack(side="left", padx=5)
+        tk.Button(save_frame, text="❌ Reject New Doc", command=self.reject_current_docstring).pack(side="left", padx=5)
         tk.Button(save_frame, text="💾 Save All Final Docstrings", command=self.save_final_docstrings).pack(side="right", padx=5)
 
     def browse_project(self):
@@ -148,13 +151,52 @@ class AutoDocGUI:
         output = self.output_path.get()
         grouped, descriptions = parse_python_files(project, use_ai=True)
         generate_docs(grouped, descriptions, output, fmt=fmt)
-
         messagebox.showinfo("Done", f"📘 {fmt.upper()} documentation generated!")
 
     def generate_pdf(self):
         self.generate_docs("html")
         export_pdf(self.output_path.get())
         messagebox.showinfo("PDF", "📄 PDF generated!")
+
+    def generate_readme(self):
+        from autodocgen.parser import parse_python_files
+        project = self.project_path.get()
+        output = self.output_path.get()
+        _, descriptions = parse_python_files(project, use_ai=True)
+        content = generate_readme_with_ai(project, descriptions)
+
+        # New window for editing and previewing README
+        win = tk.Toplevel(self.root)
+        win.title("📖 Edit README.md")
+        win.geometry("800x600")
+
+        text_editor = tk.Text(win, wrap="word")
+        text_editor.insert("1.0", content)
+        text_editor.pack(side="left", fill="both", expand=True)
+
+        preview_frame = tk.Frame(win, width=400)
+        preview_frame.pack(side="right", fill="both")
+        preview_label = HTMLLabel(preview_frame, html="")
+        preview_label.pack(fill="both", expand=True)
+
+        def update_preview():
+            import markdown
+            md_text = text_editor.get("1.0", "end")
+            html = markdown.markdown(md_text, extensions=["fenced_code"])
+            preview_label.set_html(html)
+
+        def save_readme():
+            content = text_editor.get("1.0", "end").strip()
+            readme_path = os.path.join(project, "README.md")
+            with open(readme_path, "w", encoding="utf-8") as f:
+                f.write(content)
+            messagebox.showinfo("Saved", f"✅ README.md saved at {readme_path}")
+            win.destroy()
+
+        button_frame = tk.Frame(win)
+        button_frame.pack(fill="x")
+        tk.Button(button_frame, text="👁 Preview", command=update_preview).pack(side="left", padx=5, pady=5)
+        tk.Button(button_frame, text="💾 Save README", command=save_readme).pack(side="right", padx=5, pady=5)
 
 def launch():
     root = tk.Tk()
