@@ -11,37 +11,51 @@ except ImportError:
 
 
 class DocstringInjector(ast.NodeTransformer):
-    def __init__(self, file_context="", force=False, show_diff=False):
+    def __init__(self, file_context="", force=False, show_diff=False, in_memory_funcs=None):
         self.file_context = file_context
         self.force = force
         self.show_diff = show_diff
+        self.in_memory_funcs = in_memory_funcs or []
         self.original_code = ""
         self.modified_code = ""
 
-    def visit_FunctionDef(self, node):
-        needs_doc = self.force or not ast.get_docstring(node)
-        if needs_doc:
-            arg_names = [arg.arg for arg in node.args.args]
-            doc = generate_docstring(node.name, arg_names, self.file_context)
-            doc_expr = ast.Expr(value=ast.Str(s=doc))
+    def get_custom_docstring(self, name):
+        for f in self.in_memory_funcs:
+            if f["name"] == name:
+                return f.get("docstring")
+        return None
 
-            # Remove old docstring if exists
-            if ast.get_docstring(node):
+    def visit_FunctionDef(self, node):
+        existing_doc = ast.get_docstring(node)
+        needs_doc = self.force or not existing_doc
+        if not needs_doc:
+            return self.generic_visit(node)
+
+        custom_doc = self.get_custom_docstring(node.name)
+
+        if not custom_doc and not self.in_memory_funcs:
+            arg_names = [arg.arg for arg in node.args.args]
+            custom_doc = generate_docstring(node.name, arg_names, self.file_context)
+
+        if custom_doc:
+            doc_expr = ast.Expr(value=ast.Str(s=custom_doc))
+            if existing_doc:
                 node.body = node.body[1:]
             node.body.insert(0, doc_expr)
 
         return self.generic_visit(node)
 
     def visit_ClassDef(self, node):
-        needs_doc = self.force or not ast.get_docstring(node)
+        existing_doc = ast.get_docstring(node)
+        needs_doc = self.force or not existing_doc
         if needs_doc:
             doc = f"{node.name} class description."
             doc_expr = ast.Expr(value=ast.Str(s=doc))
-            if ast.get_docstring(node):
+            if existing_doc:
                 node.body = node.body[1:]
             node.body.insert(0, doc_expr)
 
-        # Visit methods too
+        # Visit methods inside class
         self.generic_visit(node)
         return node
 
@@ -64,13 +78,21 @@ class DocstringInjector(ast.NodeTransformer):
         )
         for line in diff:
             print(line, end="")
-            
-def inject_into_file(filepath, dest_path=None, force=False, show_diff=False):
+
+
+def inject_into_file(filepath, dest_path=None, force=False, show_diff=False, in_memory_funcs=None):
     with open(filepath, "r", encoding="utf-8") as f:
         code = f.read()
 
     file_context = generate_file_description_ai(code) if generate_file_description_ai else ""
-    injector = DocstringInjector(file_context, force=force, show_diff=show_diff)
+
+    injector = DocstringInjector(
+        file_context=file_context,
+        force=force,
+        show_diff=show_diff,
+        in_memory_funcs=in_memory_funcs
+    )
+
     new_code = injector.inject(code)
 
     if show_diff:

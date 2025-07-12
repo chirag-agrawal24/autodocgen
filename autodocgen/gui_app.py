@@ -1,203 +1,162 @@
 import os
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox, scrolledtext
-import difflib
+from tkinter import ttk, filedialog, messagebox
+from autodocgen.parser import parse_python_files
+from autodocgen.generator import generate_docs, export_pdf, generate_readme
+from autodocgen.inject_docstrings import inject_into_file
 
-from .parser import parse_python_files
-from .generator import generate_docs, generate_readme, export_pdf
-from .inject_docstrings import inject_into_file
-
-class DocGenApp:
+class AutoDocGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("🧠 AutoDocGen GUI")
-        self.root.geometry("1200x700")
+        self.root.title("🧠 AutoDocGen - GUI")
 
-        self.functions = []
-        self.grouped = {}
-        self.file_descriptions = {}
-        self.path = tk.StringVar()
-        self.output = tk.StringVar(value="docs")
-        self.use_ai = tk.BooleanVar()
-        self.force = tk.BooleanVar()
-        self.hide_doc = tk.BooleanVar()
-        self.show_diff = tk.BooleanVar()
+        self.project_path = tk.StringVar()
+        self.output_path = tk.StringVar()
+        self.functions = {}
+        self.generated_docstrings = {}
+        self.rejected_funcs = set()
 
-        self.create_widgets()
+        self.setup_ui()
 
-    def create_widgets(self):
-        top = tk.Frame(self.root)
-        top.pack(fill="x", pady=5)
+    def setup_ui(self):
+        top_frame = tk.Frame(self.root)
+        top_frame.pack(fill="x", padx=10, pady=5)
 
-        tk.Label(top, text="📁 Project Path:").pack(side="left")
-        tk.Entry(top, textvariable=self.path, width=60).pack(side="left", padx=5)
-        tk.Button(top, text="Browse", command=self.browse_path).pack(side="left")
+        tk.Label(top_frame, text="📂 Project Path:").grid(row=0, column=0, sticky="w")
+        tk.Entry(top_frame, textvariable=self.project_path, width=60).grid(row=0, column=1)
+        tk.Button(top_frame, text="Browse", command=self.browse_project).grid(row=0, column=2, padx=5)
 
-        tk.Label(top, text="📂 Output Path:").pack(side="left", padx=10)
-        tk.Entry(top, textvariable=self.output, width=30).pack(side="left", padx=5)
+        tk.Label(top_frame, text="📁 Output Path:").grid(row=1, column=0, sticky="w")
+        tk.Entry(top_frame, textvariable=self.output_path, width=60).grid(row=1, column=1)
+        tk.Button(top_frame, text="Browse", command=self.browse_output).grid(row=1, column=2, padx=5)
 
-        opts = tk.Frame(self.root)
-        opts.pack(fill="x", pady=5)
-        tk.Checkbutton(opts, text="Use AI", variable=self.use_ai).pack(side="left", padx=5)
-        tk.Checkbutton(opts, text="Force Overwrite", variable=self.force).pack(side="left", padx=5)
-        tk.Checkbutton(opts, text="Hide Already Documented", variable=self.hide_doc, command=self.update_function_list).pack(side="left", padx=5)
-        tk.Checkbutton(opts, text="Show Diff", variable=self.show_diff).pack(side="left", padx=5)
+        middle_frame = tk.Frame(self.root)
+        middle_frame.pack(fill="x", padx=10, pady=5)
 
-        btns = tk.Frame(self.root)
-        btns.pack(fill="x", pady=5)
-        tk.Button(btns, text="🔍 Scan", command=self.scan).pack(side="left", padx=5)
-        tk.Button(btns, text="⚙️ Generate Docs", command=self.apply_and_generate).pack(side="left", padx=5)
+        tk.Button(middle_frame, text="🧠 Generate Docstrings", command=self.generate_docstrings).pack(side="left", padx=5)
+        tk.Button(middle_frame, text="📄 Generate HTML", command=lambda: self.generate_docs("html")).pack(side="left", padx=5)
+        tk.Button(middle_frame, text="📝 Generate Markdown", command=lambda: self.generate_docs("markdown")).pack(side="left", padx=5)
+        tk.Button(middle_frame, text="📘 Generate PDF", command=self.generate_pdf).pack(side="left", padx=5)
 
-        self.tree = ttk.Treeview(self.root)
-        self.tree.pack(fill="both", expand=True, padx=10, pady=5)
+        self.main_pane = tk.PanedWindow(self.root, orient="horizontal")
+        self.main_pane.pack(fill="both", expand=True, padx=10, pady=5)
+
+        # Left: Tree view
+        self.tree = ttk.Treeview(self.main_pane)
+        self.tree.heading("#0", text="📁 Files / 🧩 Functions")
         self.tree.bind("<<TreeviewSelect>>", self.on_tree_select)
+        self.main_pane.add(self.tree)
 
-        self.details = scrolledtext.ScrolledText(self.root, height=12)
-        self.details.pack(fill="x", padx=10)
+        # Right: Split top and bottom
+        self.right_frame = tk.Frame(self.main_pane)
+        self.main_pane.add(self.right_frame)
 
-        self.edit_frame = tk.Frame(self.root)
-        self.edit_frame.pack(fill="x")
-        self.edit_box = scrolledtext.ScrolledText(self.edit_frame, height=8)
-        self.edit_box.pack(fill="both", expand=True, padx=10, pady=5)
-        tk.Button(self.edit_frame, text="💾 Save Docstring", command=self.save_docstring).pack(pady=2)
+        self.old_doc_label = tk.Label(self.right_frame, text="📝 Old Docstring:")
+        self.old_doc_label.pack(anchor="w")
+        self.old_doc = tk.Text(self.right_frame, height=10, bg="#f9f9f9")
+        self.old_doc.pack(fill="x")
 
-    def browse_path(self):
+        self.new_doc_label = tk.Label(self.right_frame, text="🤖 New Docstring:")
+        self.new_doc_label.pack(anchor="w")
+        self.new_doc = tk.Text(self.right_frame, height=10, bg="#eaffea")
+        self.new_doc.pack(fill="x")
+
+        # Save actions
+        save_frame = tk.Frame(self.right_frame)
+        save_frame.pack(fill="x", pady=5)
+        tk.Button(save_frame, text="❌ Reject This", command=self.reject_current_docstring).pack(side="left", padx=5)
+        tk.Button(save_frame, text="💾 Save All Final Docstrings", command=self.save_final_docstrings).pack(side="right", padx=5)
+
+    def browse_project(self):
         path = filedialog.askdirectory()
         if path:
-            self.path.set(path)
+            self.project_path.set(path)
 
-    def scan(self):
-        if not os.path.exists(self.path.get()):
-            messagebox.showerror("Error", "Invalid path")
-            return
-        self.grouped, self.file_descriptions = parse_python_files(self.path.get(), use_ai=self.use_ai.get())
-        self.update_function_list()
+    def browse_output(self):
+        path = filedialog.askdirectory()
+        if path:
+            self.output_path.set(path)
 
-    def update_function_list(self):
+    def generate_docstrings(self):
+        from autodocgen.parser import parse_python_files
+        from autodocgen.ai_docstring_generator import generate_docstring
+
         self.tree.delete(*self.tree.get_children())
-        for file_path, funcs in self.grouped.items():
-            rel_path = os.path.relpath(file_path, self.path.get())
-            file_node = self.tree.insert("", "end", text=rel_path, open=True)
+        self.functions = {}
+        self.generated_docstrings = {}
+        self.rejected_funcs = set()
+
+        project = self.project_path.get()
+        grouped, file_descriptions = parse_python_files(project, use_ai=True)
+        for file_path, funcs in grouped.items():
+            file_node = self.tree.insert("", "end", text=file_path, open=False)
             for func in funcs:
-                if self.hide_doc.get() and func["docstring"] and "No docstring" not in func["docstring"]:
-                    continue
-                self.tree.insert(file_node, "end", text=func["name"], values=(file_path, func["name"]))
+                key = f"{file_path}::{func['name']}"
+                self.functions[key] = func
+                doc = generate_docstring(func['name'], func['args'], file_descriptions.get(file_path, ""))
+                self.generated_docstrings[key] = doc
+                self.tree.insert(file_node, "end", text=func['name'], values=(key,))
 
     def on_tree_select(self, event):
-        selected = self.tree.selection()
-        if not selected:
+        item_id = self.tree.selection()
+        if not item_id:
             return
-        item = self.tree.item(selected[0])
-        parent = self.tree.parent(selected[0])
-        if not parent:
-            return  # it's a file node
-        file_path, func_name = item["values"]
-        for func in self.grouped[file_path]:
-            if func["name"] == func_name:
-                self.current_func = func
-                self.details.delete("1.0", "end")
-                self.edit_box.delete("1.0", "end")
-
-                self.details.insert("1.0", f"🔧 Function: {func['name']}\n📄 File: {func['file']}\n📥 Args: {', '.join(func['args'])}\n📜 Original:\n\n{func['docstring']}")
-                self.edit_box.insert("1.0", func["docstring"])
-                if self.show_diff.get() and func["docstring"] and "No docstring" not in func["docstring"]:
-                    diff = self.generate_diff(func["docstring"], self.edit_box.get("1.0", "end"))
-                    self.details.insert("end", "\n\n🧾 Diff:\n" + "\n".join(diff))
-                break
-
-    def generate_diff(self, old, new):
-        return list(difflib.unified_diff(old.strip().splitlines(), new.strip().splitlines(), lineterm=""))
-
-    def save_docstring(self):
-        if not hasattr(self, "current_func"):
+        item = self.tree.item(item_id[0])
+        func_key = item['values'][0] if item['values'] else None
+        if not func_key or func_key not in self.functions:
             return
-        new_doc = self.edit_box.get("1.0", "end").strip()
-        self.current_func["docstring"] = new_doc
-        messagebox.showinfo("Saved", "Docstring updated locally.")
 
-    def apply_and_generate(self):
-        args = {
-            "output": os.path.abspath(self.output.get()),
-            "path": self.path.get(),
-            "use_ai": self.use_ai.get(),
-            "force": self.force.get(),
-        }
-        os.makedirs(args["output"], exist_ok=True)
-        generate_docs(self.grouped, self.file_descriptions, args["output"], fmt="markdown")
-        generate_docs(self.grouped, self.file_descriptions, args["output"], fmt="html")
-        generate_readme(args["path"], self.file_descriptions, use_ai=args["use_ai"])
-        export_pdf(args["output"])
+        func = self.functions[func_key]
+        old_doc = func.get("docstring", "")
+        new_doc = self.generated_docstrings.get(func_key, "")
 
-        messagebox.showinfo("Docs Generated", "📘 Markdown, HTML, README & PDF generated.")
-        self.show_doc_editors()
+        self.old_doc.delete("1.0", "end")
+        self.old_doc.insert("1.0", old_doc)
 
-    def show_doc_editors(self):
-        top = tk.Toplevel(self.root)
-        top.title("📝 Edit Generated Documentation")
-        top.geometry("1000x700")
+        self.new_doc.delete("1.0", "end")
+        self.new_doc.insert("1.0", new_doc)
 
-        tabs = ttk.Notebook(top)
-        tabs.pack(fill="both", expand=True)
+    def reject_current_docstring(self):
+        item_id = self.tree.selection()
+        if not item_id:
+            return
+        item = self.tree.item(item_id[0])
+        func_key = item['values'][0] if item['values'] else None
+        if func_key:
+            self.rejected_funcs.add(func_key)
 
-        def load_text(path):
-            try:
-                with open(path, encoding="utf-8") as f:
-                    return f.read()
-            except:
-                return ""
+    def save_final_docstrings(self):
+        for key, func in self.functions.items():
+            if key in self.rejected_funcs:
+                continue
+            func["docstring"] = self.generated_docstrings.get(key, "")
 
-        md_text = load_text(os.path.join(self.output.get(), "documentation.md"))
-        html_text = load_text(os.path.join(self.output.get(), "documentation.html"))
-        readme_text = load_text(os.path.join(self.path.get(), "README.md"))
+        for filepath in set(k.split("::")[0] for k in self.functions):
+            related_funcs = {
+                k.split("::")[1]: self.functions[k]["docstring"]
+                for k in self.functions
+                if k.startswith(filepath + "::") and k not in self.rejected_funcs
+            }
+            output_file = os.path.join(self.output_path.get(), os.path.relpath(filepath, start=self.project_path.get()))
+            inject_into_file(filepath, dest_path=output_file, force=True, show_diff=False, in_memory_funcs=related_funcs)
 
-        self.editor_md = self._create_tab(tabs, "Markdown", md_text)
-        self.editor_html = self._create_tab(tabs, "HTML", html_text)
-        self.editor_readme = self._create_tab(tabs, "README.md", readme_text)
+        messagebox.showinfo("Success", "✅ Docstrings injected and saved!")
 
-        save_frame = tk.Frame(top)
-        save_frame.pack(fill="x")
+    def generate_docs(self, fmt="html"):
+        from autodocgen.parser import parse_python_files
+        project = self.project_path.get()
+        output = self.output_path.get()
+        grouped, descriptions = parse_python_files(project, use_ai=True)
+        generate_docs(grouped, descriptions, output, fmt=fmt)
 
-        tk.Button(save_frame, text="💾 Save Markdown", command=self.save_md).pack(side="left", padx=5)
-        tk.Button(save_frame, text="💾 Save HTML", command=self.save_html).pack(side="left", padx=5)
-        tk.Button(save_frame, text="💾 Save README", command=self.save_readme).pack(side="left", padx=5)
-        tk.Button(save_frame, text="📄 Export PDF", command=self.export_pdf_from_html).pack(side="right", padx=5)
+        messagebox.showinfo("Done", f"📘 {fmt.upper()} documentation generated!")
 
-    def _create_tab(self, tabs, label, content):
-        frame = tk.Frame(tabs)
-        text_widget = scrolledtext.ScrolledText(frame, font=("Courier", 10))
-        text_widget.pack(fill="both", expand=True)
-        text_widget.insert("1.0", content)
-        tabs.add(frame, text=label)
-        return text_widget
-
-    def save_md(self):
-        path = os.path.join(self.output.get(), "documentation.md")
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(self.editor_md.get("1.0", "end").strip())
-        messagebox.showinfo("Saved", "Markdown saved.")
-
-    def save_html(self):
-        path = os.path.join(self.output.get(), "documentation.html")
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(self.editor_html.get("1.0", "end").strip())
-        messagebox.showinfo("Saved", "HTML saved.")
-
-    def save_readme(self):
-        path = os.path.join(self.path.get(), "README.md")
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(self.editor_readme.get("1.0", "end").strip())
-        messagebox.showinfo("Saved", "README.md saved.")
-
-    def export_pdf_from_html(self):
-        from xhtml2pdf import pisa
-        path_html = os.path.join(self.output.get(), "documentation.html")
-        path_pdf = os.path.join(self.output.get(), "documentation.pdf")
-        html_content = self.editor_html.get("1.0", "end")
-        with open(path_pdf, "wb") as f:
-            pisa.CreatePDF(html_content, dest=f)
-        messagebox.showinfo("Exported", "📄 PDF created from edited HTML.")
+    def generate_pdf(self):
+        self.generate_docs("html")
+        export_pdf(self.output_path.get())
+        messagebox.showinfo("PDF", "📄 PDF generated!")
 
 def launch():
     root = tk.Tk()
-    app = DocGenApp(root)
+    app = AutoDocGUI(root)
     root.mainloop()
