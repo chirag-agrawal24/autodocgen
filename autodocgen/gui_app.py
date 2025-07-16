@@ -14,6 +14,7 @@ class AutoDocGUI:
 
         self.project_path = tk.StringVar()
         self.output_path = tk.StringVar()
+        self.ignore_paths = []
         self.functions = {}
         self.generated_docstrings = {}
         self.rejected_funcs = set()
@@ -31,6 +32,17 @@ class AutoDocGUI:
         tk.Label(top_frame, text="📁 Output Path:").grid(row=1, column=0, sticky="w")
         tk.Entry(top_frame, textvariable=self.output_path, width=60).grid(row=1, column=1)
         tk.Button(top_frame, text="Browse", command=self.browse_output).grid(row=1, column=2, padx=5)
+        
+
+        tk.Label(top_frame, text="🚫 Ignored Folders:").grid(row=2, column=0, sticky="nw")
+        self.ignore_listbox = tk.Listbox(top_frame, height=4, width=60)
+        self.ignore_listbox.grid(row=2, column=1, sticky="w")
+
+        ignore_btns = tk.Frame(top_frame)
+        ignore_btns.grid(row=2, column=2, sticky="n")
+
+        tk.Button(ignore_btns, text="+ Add", command=self.add_ignore_folder).pack(pady=2)
+        tk.Button(ignore_btns, text="🗑 Clear", command=self.clear_ignore_folders).pack(pady=2)
 
         middle_frame = tk.Frame(self.root)
         middle_frame.pack(fill="x", padx=10, pady=5)
@@ -79,6 +91,15 @@ class AutoDocGUI:
         path = filedialog.askdirectory()
         if path:
             self.output_path.set(path)
+    def add_ignore_folder(self):
+        folder = filedialog.askdirectory()
+        if folder and folder not in self.ignore_paths:
+            self.ignore_paths.append(folder)
+            self.ignore_listbox.insert("end", folder)
+
+    def clear_ignore_folders(self):
+        self.ignore_paths.clear()
+        self.ignore_listbox.delete(0, "end")
 
     def generate_docstrings(self):
         from autodocgen.parser import parse_python_files
@@ -90,7 +111,8 @@ class AutoDocGUI:
         self.rejected_funcs = set()
 
         project = self.project_path.get()
-        grouped, file_descriptions = parse_python_files(project, use_ai=True)
+        grouped, file_descriptions = parse_python_files(project, use_ai=True, ignore=self.ignore_paths)
+
         for file_path, funcs in grouped.items():
             file_node = self.tree.insert("", "end", text=file_path, open=False)
             for func in funcs:
@@ -159,8 +181,13 @@ class AutoDocGUI:
         from autodocgen.parser import parse_python_files
         project = self.project_path.get()
         output = os.path.join(self.output_path.get(), "project_docs")
+        if not project or not output:
+            messagebox.showerror("Error", "Please specify both project and output paths.")
+            return
         os.makedirs(os.path.dirname(output), exist_ok=True)
-        grouped, descriptions = parse_python_files(project, use_ai=True)
+        
+        grouped, descriptions = parse_python_files(project, use_ai=True, ignore=self.ignore_paths)
+
         generate_docs(grouped, descriptions, output, fmt=fmt)
         messagebox.showinfo("Done", f"📘 {fmt.upper()} documentation generated!")
 
@@ -174,14 +201,18 @@ class AutoDocGUI:
         
         os.makedirs(output_path, exist_ok=True)
 
-        export_pdf(output_path)
-        messagebox.showinfo("PDF", "📄 PDF generated!")
+        success = export_pdf(output_path)
+        if success:
+            messagebox.showinfo("PDF", "📄 PDF generated!")
+        else:
+            messagebox.showerror("PDF Error", "❌ Failed to generate PDF. Please check the console for details.")
 
     def generate_readme(self):
         from autodocgen.parser import parse_python_files
         project = self.project_path.get()
         output = self.output_path.get()
-        _, descriptions = parse_python_files(project, use_ai=True)
+        
+        _, descriptions = parse_python_files(project, use_ai=True, ignore=self.ignore_paths)
         content = generate_readme_with_ai(project, descriptions)
 
         # New window for editing and previewing README

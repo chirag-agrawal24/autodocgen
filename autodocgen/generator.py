@@ -12,8 +12,9 @@ def export_pdf(output_dir):
         index_file = os.path.join(output_dir, "index.html")
         pdf_path = os.path.join(output_dir, "documentation.pdf")
         HTML(index_file).write_pdf(pdf_path)
+        return True
     except Exception as e:
-        export_pdf_simple(output_dir)
+        return export_pdf_simple(output_dir)
     
 
 
@@ -24,7 +25,7 @@ def export_pdf_simple(output_dir):
         from xhtml2pdf import pisa
     except ImportError:
         print("❌ xhtml2pdf is not installed. Please install it to export PDF.")
-        return
+        return False
     html_file = os.path.join(output_dir, "index.html")
     pdf_file = os.path.join(output_dir, "documentation.pdf")
 
@@ -36,8 +37,11 @@ def export_pdf_simple(output_dir):
 
     if pisa_status.err:
         print("❌ Error creating PDF")
-    else:
-        print(f"✅ PDF created at {pdf_file}")
+        return False
+    
+    print(f"✅ PDF created at {pdf_file}")
+    return True
+    
 
 
 def generate_readme(project_path, file_descriptions,use_ai=False):
@@ -57,7 +61,7 @@ def generate_readme(project_path, file_descriptions,use_ai=False):
 
         content += "\n## 📄 How to Regenerate Docs\n\n"
         content += "```bash\n"
-        content += "python -m yourdocgen.cli --path . --output-dir docs --fmt html --use-ai --pdf --readme\n"
+        content += "python -m autodocgen run --path . --output-dir docs --fmt html --use-ai --pdf --readme\n"
         content += "```\n"
 
     # Write to README.md
@@ -88,7 +92,7 @@ def render_template(template_name, context, output_path, fmt="markdown"):
 
 
 
-def generate_docs(grouped, file_descriptions, output_dir, fmt="markdown"):
+def generate_docs(grouped, file_descriptions, output_dir, fmt="markdown",soucre_path=os.getcwd()):
     ext = "md" if fmt == "markdown" else "html"
     group_template = f"grouped.{ext}.j2"
     index_template = f"index.{ext}.j2"
@@ -98,7 +102,7 @@ def generate_docs(grouped, file_descriptions, output_dir, fmt="markdown"):
     descriptions_rel = {}
 
     for filepath, items in grouped.items():
-        rel_path = os.path.relpath(filepath, start=os.getcwd()).replace(os.sep, "/")
+        rel_path = os.path.relpath(filepath, start=soucre_path).replace(os.sep, "/")
         grouped_rel[rel_path] = items
         descriptions_rel[rel_path] = file_descriptions.get(filepath, "No description available.")
 
@@ -108,13 +112,13 @@ def generate_docs(grouped, file_descriptions, output_dir, fmt="markdown"):
             "file_path": rel_path,
             "file_description": descriptions_rel[rel_path],
         }, output_path, fmt=fmt)
-        print(f"✅ Generated: {output_path}")
+        print(f"Generated: {output_path}")
 
     index_path = os.path.join(output_dir, f"index.{ext}")
     render_template(index_template, {
         "grouped": grouped_rel,
         "file_descriptions": descriptions_rel,
     }, index_path, fmt=fmt)
-    print(f"📚 Index generated: {index_path}")
+    print(f"Index generated: {index_path}")
 
 

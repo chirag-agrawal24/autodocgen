@@ -58,8 +58,12 @@ def parse_class(node, file_path, use_ai=False, context=""):
 
 
 def parse_file(file_path, use_ai=False):
-    with open(file_path, "r", encoding="utf-8") as f:
-        source = f.read()
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            source = f.read()
+    except UnicodeDecodeError:
+        with open(file_path, "r", encoding="utf-8-sig") as f:
+            source = f.read()
 
     tree = ast.parse(source, filename=file_path)
     items = []
@@ -73,11 +77,13 @@ def parse_file(file_path, use_ai=False):
     return items, source
 
 
-def parse_python_files(directory, use_ai=False):
+def parse_python_files(directory, use_ai=False,ignore=[]):
     grouped = defaultdict(list)
     file_descriptions = {}
 
     for root, _, files in os.walk(directory):
+        if any(ignored in root for ignored in ignore):
+            continue
         for file in files:
             if file.endswith(".py"):
                 path = os.path.join(root, file)

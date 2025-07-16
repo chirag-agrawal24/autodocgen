@@ -21,6 +21,13 @@ def main():
     cli_parser.add_argument("--inplace", action="store_true", help="Modify original source files (DANGEROUS).")
     cli_parser.add_argument("--force", action="store_true", help="Force overwrite existing docstrings.")
     cli_parser.add_argument("--diff", action="store_true", help="Show diff of injected docstrings.")
+    cli_parser.add_argument(
+    "--ignore",
+    action="append",
+    default=[],
+    help="Folders to ignore (can be specified multiple times)."
+)
+
 
     # GUI Mode
     subparsers.add_parser("gui", help="Launch the GUI")
@@ -52,6 +59,7 @@ def main():
             "inplace": args.inplace,
             "force": args.force,
             "diff": args.diff,
+            "ignore":args.ignore
         }, logger=print)
 
     else:

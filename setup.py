@@ -1,5 +1,8 @@
 from setuptools import setup, find_packages
 
+with open("requirements.txt") as f:
+    required = f.read().splitlines()
+
 setup(
     name='autodocgen',
     version='0.1.0',
@@ -8,10 +11,7 @@ setup(
     author_email='2411chirag@gmail.com',
     packages=find_packages(),
     include_package_data=True,
-    install_requires=[
-        'click',
-        'Jinja2',
-    ],
+    install_requires=required,
     entry_points={
         'console_scripts': [
             'autodocgen=autodocgen.cli:main'
@@ -21,5 +21,5 @@ setup(
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: MIT License'
     ],
-    python_requires='>=3.8',
+    python_requires='>=3.10',
 )

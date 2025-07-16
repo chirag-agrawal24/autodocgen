@@ -97,9 +97,10 @@ def inject_into_file(filepath, dest_path=None, force=False, show_diff=False, in_
 
     if show_diff:
         injector.show_code_diff()
-
+    
     dest = dest_path or filepath
     os.makedirs(os.path.dirname(dest), exist_ok=True)
 
     with open(dest, "w", encoding="utf-8") as f:
         f.write(new_code)
+    print(f"Docstrings injected into {dest}")

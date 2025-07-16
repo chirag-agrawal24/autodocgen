@@ -2,8 +2,14 @@ import os
 from autodocgen.parser import parse_python_files
 from autodocgen.generator import generate_docs, generate_readme, export_pdf
 from autodocgen.inject_docstrings import inject_into_file
+from autodocgen.logger import SimpleLogger
 
-def run_documentation_tool(args: dict, logger=print):
+logger= SimpleLogger(name='autodocgen', log_file='autodocgen.log')
+
+def should_ignore(path, ignore_list):
+    return any(os.path.commonpath([path, os.path.abspath(ign)]) == os.path.abspath(ign) for ign in ignore_list)
+
+def run_documentation_tool(args: dict, logger=logger):
     """
     Run the full documentation pipeline.
     
@@ -28,23 +34,14 @@ def run_documentation_tool(args: dict, logger=print):
 
     os.makedirs(output_dir, exist_ok=True)
 
-    logger(f"🔍 Parsing Python files in: {path}")
+    logger(f"Parsing Python files in: {path}")
     grouped, file_descriptions = parse_python_files(path, use_ai=use_ai)
-
-    logger(f"🛠️ Generating documentation in {fmt} format...")
-    generate_docs(grouped, file_descriptions, output_dir, fmt=fmt)
-
-    if export_as_pdf and fmt == "html":
-        export_pdf(output_dir)
-        logger("📄 PDF export complete.")
-
-    if generate_readme_flag:
-        generate_readme(path, file_descriptions, use_ai=use_ai)
-        logger("📘 README.md generated.")
-
     if inject_docs:
-        logger("🧠 Injecting AI docstrings into source files...")
+        logger("Injecting AI docstrings into source files...")
+        
         for root, _, files in os.walk(path):
+            if should_ignore(root, args.get("ignore", [])):
+                continue
             for file in files:
                 if file.endswith(".py"):
                     src_file = os.path.join(root, file)
@@ -58,4 +55,17 @@ def run_documentation_tool(args: dict, logger=print):
                         show_diff=show_diff
                     )
 
-        logger(f"✅ Docstrings injected {'(in-place)' if inplace else 'in copied files'}")
+        logger(f"Docstrings injected {'(in-place)' if inplace else 'in copied files'}")
+        
+    logger(f"Generating documentation in {fmt} format...")
+    generate_docs(grouped, file_descriptions, output_dir, fmt=fmt,soucre_path=path)
+
+    if export_as_pdf and fmt == "html":
+        export_pdf(output_dir)
+        logger("PDF export complete.")
+
+    if generate_readme_flag:
+        generate_readme(path, file_descriptions, use_ai=use_ai)
+        logger("README.md generated.")
+
+    
