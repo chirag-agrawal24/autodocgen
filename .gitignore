@@ -5,3 +5,5 @@ start.py
 test.py
 autodocgen.egg-info
 vscode-extension/node_modules
+*vsix
+*.log
