@@ -2,19 +2,19 @@
 
 > **Summary of Python File**
 
-This Python file contains three functions:
+This Python file defines three functions:
 
 ### Functions
 
 1. **`greet(name)`**: Returns a personalized greeting string for a given `name`.
-2. **`capitalize_words(text)`**: Takes a string `text` as input, splits it into words, capitalizes each word, and joins them back together with spaces in between.
-3. **`count_words(text)`**: Counts the number of words in the input `text` by splitting it into words and returning the length of the resulting list.
+2. **`capitalize_words(text)`**: Takes a string `text` and returns a new string with each word capitalized.
+3. **`count_words(text)`**: Counts the number of words in a given `text` string and returns the count.
 
 **Example Use Cases**
 
 * `greet("John")` returns `"Hello, John!"`
 * `capitalize_words("hello world")` returns `"Hello World"`
-* `count_words("hello world")` returns `2`
+* `count_words("hello world again")` returns `3`
 
 
 ---

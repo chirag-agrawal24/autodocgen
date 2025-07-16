@@ -1,14 +1,13 @@
 def add(a, b):
-    """Adds two numbers and returns their sum.
+    """Returns the sum of two input numbers.
 
 Args:
-    a: The first number to add.
-    b: The second number to add.
+    a (int or float): The first number.
+    b (int or float): The second number.
 
 Returns:
-    The sum of a and b.
+    int or float: The sum of a and b.
 
 Example:
-    >>> add(2, 3)
-    5"""
+    result = add(3, 5)  # result = 8"""
     return a + b

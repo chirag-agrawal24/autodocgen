@@ -4,10 +4,21 @@ def greet(name):
 
 
 def capitalize_words(text):
-    """Returns a new string with each word in the input text capitalized."""
+    """Capitalizes the first letter of each word in the input text and returns the modified string."""
     return ' '.join(word.capitalize() for word in text.split())
 
 
 def count_words(text):
-    """Counts the number of words in a given text string."""
+    """Count the number of words in the given text.
+
+ 
+Parameters
+----------
+text : str
+    The input text.
+
+Returns
+-------
+int
+    The number of words in the text."""
     return len(text.split())
