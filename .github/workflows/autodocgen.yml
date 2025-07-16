@@ -1,4 +1,4 @@
-name: 🧠 AutoDocGen
+name: AutoDocGen Documentation Generation
 
 on:
   push:
