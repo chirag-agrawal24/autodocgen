@@ -7,3 +7,4 @@ astor
 tkhtmlview
 groq
 xhtml2pdf
+dotenv

@@ -74,6 +74,30 @@ python -m autodocgen gui
 autodocgen gui
 ```
 
+### 🖼 GUI Requirements
+
+AutoDocGen's GUI uses `tkinter`, which is included with most standard Python installations.
+However, on **Linux**, you may need to install it manually:
+
+#### 🔧 For Debian/Ubuntu:
+
+```bash
+sudo apt-get install python3-tk
+```
+
+#### 🔧 For Arch Linux:
+
+```bash
+sudo pacman -S tk
+```
+
+#### ✅ Windows & macOS:
+
+No additional steps — `tkinter` usually comes pre-installed with Python.If it's missing, install Python from python.org with the "tcl/tk" option checked.
+
+---
+
+
 **Features:**
 
 * 📁 Browse and select project/output folders.
