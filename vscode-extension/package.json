@@ -3,6 +3,7 @@
   "displayName": "AutoDocGen",
   "description": "Generate AI-based documentation and docstrings",
   "version": "0.0.1",
+  "publisher": "Chirag Agrawal",
   "engines": {
     "vscode": "^1.70.0"
   },
