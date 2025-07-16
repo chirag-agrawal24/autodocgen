@@ -8,6 +8,10 @@
     "vscode": "^1.70.0"
   },
   "main": "./out/extension.js",
+  "activationEvents": [
+    "onCommand:autodocgen.run",
+    "onCommand:autodocgen.runGui"
+  ],
   "contributes": {
     "commands": [
       {
