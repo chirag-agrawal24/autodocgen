@@ -44,7 +44,9 @@ def export_pdf_simple(output_dir):
     
 
 
-def generate_readme(project_path, file_descriptions,use_ai=False):
+def generate_readme(file_descriptions,project_path=None,output_path=None,use_ai=False, replace_existing=False):
+    if not project_path and not output_path:
+        project_path = os.getcwd()
     if use_ai:
         from .ai_docstring_generator import generate_readme_with_ai
         content = generate_readme_with_ai(project_path, file_descriptions)
@@ -63,11 +65,15 @@ def generate_readme(project_path, file_descriptions,use_ai=False):
         content += "```bash\n"
         content += "python -m autodocgen run --path . --output-dir docs --fmt html --use-ai --pdf --readme\n"
         content += "```\n"
-
-    # Write to README.md
-    readme_path = os.path.join(project_path, "README.md")
-    with open(readme_path, "w", encoding="utf-8") as f:
-        f.write(content)
+    if replace_existing or not os.path.exists(os.path.join(project_path, "README.md")):
+        # Write to README.md
+        readme_path = os.path.join(project_path, "README.md")
+        with open(readme_path, "w", encoding="utf-8") as f:
+            f.write(content)
+    if output_path:
+        readme_path = os.path.join(output_path, "README.md")
+        with open(readme_path, "w", encoding="utf-8") as f:
+            f.write(content)
 
 def markdown_filter(text):
     return md_lib(text or "", extensions=["fenced_code"])
@@ -102,6 +108,7 @@ def generate_docs(grouped, file_descriptions, output_dir, fmt="markdown",soucre_
     descriptions_rel = {}
 
     for filepath, items in grouped.items():
+        
         rel_path = os.path.relpath(filepath, start=soucre_path).replace(os.sep, "/")
         grouped_rel[rel_path] = items
         descriptions_rel[rel_path] = file_descriptions.get(filepath, "No description available.")

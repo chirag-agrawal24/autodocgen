@@ -8,6 +8,8 @@ except ImportError:
     generate_docstring = None
     generate_file_description_ai = None
 
+def should_ignore(path, ignore_list):
+    return any(os.path.commonpath([path, os.path.abspath(ign)]) == os.path.abspath(ign) for ign in ignore_list)
 
 def parse_function(node, file_path, use_ai=False, context=""):
     args = []
@@ -82,8 +84,8 @@ def parse_python_files(directory, use_ai=False,ignore=[]):
     file_descriptions = {}
 
     for root, _, files in os.walk(directory):
-        if any(ignored in root for ignored in ignore):
-            continue
+        if should_ignore(root, ignore):
+                continue
         for file in files:
             if file.endswith(".py"):
                 path = os.path.join(root, file)

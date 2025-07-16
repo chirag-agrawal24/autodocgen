@@ -27,6 +27,7 @@ def run_documentation_tool(args: dict, logger=logger):
     inplace = args.get("inplace", False)
     force = args.get("force", False)
     show_diff = args.get("diff", False)
+    ignore_paths = args.get("ignore", [])
 
     if not os.path.exists(path):
         logger(f"❌ Error: path '{path}' does not exist.")
@@ -35,12 +36,16 @@ def run_documentation_tool(args: dict, logger=logger):
     os.makedirs(output_dir, exist_ok=True)
 
     logger(f"Parsing Python files in: {path}")
-    grouped, file_descriptions = parse_python_files(path, use_ai=use_ai)
+    logger(f"Output directory: {output_dir}")
+    logger(f"Documentation format: {fmt}")
+    logger("Ignoring directories: " + ", ".join(ignore_paths) if ignore_paths else "No directories to ignore")
+
+    grouped, file_descriptions = parse_python_files(path, use_ai=use_ai,ignore=ignore_paths)
     if inject_docs:
         logger("Injecting AI docstrings into source files...")
         
         for root, _, files in os.walk(path):
-            if should_ignore(root, args.get("ignore", [])):
+            if should_ignore(root, ignore_paths):
                 continue
             for file in files:
                 if file.endswith(".py"):
@@ -58,6 +63,10 @@ def run_documentation_tool(args: dict, logger=logger):
         logger(f"Docstrings injected {'(in-place)' if inplace else 'in copied files'}")
         
     logger(f"Generating documentation in {fmt} format...")
+    if fmt not in ["markdown", "html"]:
+        logger(f"❌ Unsupported format: {fmt}. Supported formats are 'markdown' and 'html'.")
+        return
+    print(grouped.keys())
     generate_docs(grouped, file_descriptions, output_dir, fmt=fmt,soucre_path=path)
 
     if export_as_pdf and fmt == "html":
@@ -65,7 +74,7 @@ def run_documentation_tool(args: dict, logger=logger):
         logger("PDF export complete.")
 
     if generate_readme_flag:
-        generate_readme(path, file_descriptions, use_ai=use_ai)
+        generate_readme(project_path=path,output_path=output_dir, file_descriptions=file_descriptions, use_ai=use_ai,replace_existing=inplace)
         logger("README.md generated.")
 
     

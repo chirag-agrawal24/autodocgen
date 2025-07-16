@@ -32,8 +32,7 @@ jobs:
       env:
         GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       run: |
-        autodocgen run --path . --output-dir autodocs_output --use-ai --readme --inject-docs --ignore docs,test_files,tests,venv,.venv
-      
+        autodocgen run --path . --output-dir autodocs_output --use-ai --readme --inject-docs --ignore docs --ignore test_files --ignore tests --ignore .venv --ignore autodocs_output
 
     - name: 📝 Commit generated docs
       run: |

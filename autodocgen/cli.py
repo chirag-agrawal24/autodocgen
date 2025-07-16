@@ -47,7 +47,7 @@ def main():
             sys.exit(1)
 
         os.makedirs(output_dir, exist_ok=True)
-
+        print(args.ignore)
         run_documentation_tool({
             "path": project_path,
             "output": output_dir,
