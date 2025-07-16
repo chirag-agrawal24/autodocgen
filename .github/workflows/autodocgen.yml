@@ -3,6 +3,7 @@ name: 🧠 AutoDocGen
 on:
   push:
     paths:
+      - 'requirements.txt'
       - '**/*.py'
       - 'autodocgen/**'
   pull_request:
@@ -27,8 +28,11 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     - name: 🧠 Run AutoDocGen
+      env:
+        GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       run: |
         autodocgen run --path . --output-dir autodocs_output --use-ai --readme --inject-docs --ignore docs,test_files,tests,venv,.venv
+      
 
     - name: 📝 Commit generated docs
       run: |
