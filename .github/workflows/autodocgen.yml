@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'requirements.txt'
+      - 'autodocgen.yml'
       - '**/*.py'
       - 'autodocgen/**'
   pull_request:
