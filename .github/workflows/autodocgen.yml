@@ -1,0 +1,39 @@
+name: 🧠 AutoDocGen
+
+on:
+  push:
+    paths:
+      - '**/*.py'
+      - 'autodocgen/**'
+  pull_request:
+
+jobs:
+  docgen:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: ⬇️ Checkout code
+      uses: actions/checkout@v3
+
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: 📦 Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: 🧠 Run AutoDocGen
+      run: |
+        autodocgen run --path . --output-dir autodocs_output --use-ai --readme --inject-docs --ignore docs,test_files,tests,venv,.venv
+
+    - name: 📝 Commit generated docs
+      run: |
+        git config --global user.name "AutoDocBot"
+        git config --global user.email "actions@github.com"
+        git add -A
+        git diff --cached --quiet || git commit -m "🔄 Auto-generated documentation"
+        git push
