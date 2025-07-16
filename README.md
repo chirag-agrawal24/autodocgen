@@ -2,8 +2,11 @@
 
 AutoDocGen is a powerful Python-based tool that uses AI to automatically generate docstrings and full project documentation. It supports both command-line and graphical interfaces, as well as a VS Code extension, making it a complete solution for maintaining professional-grade documentation with minimal effort.
 
-![AutoDocGen GUI Demo](/assets/gui-demo.png)
-![AutoDocGen Markdown Demo](/assets/md-demo.png)
+<img width="1912" height="1013" alt="Screenshot 2025-07-16 195446" src="https://github.com/user-attachments/assets/3f3256b8-b3fb-43c8-ac0b-3af4108e4d49" />
+
+### AutoDocGen Markdown Editor
+<img width="1919" height="1010" alt="Screenshot 2025-07-16 195624" src="https://github.com/user-attachments/assets/5db2e5c1-dce3-441e-8103-9b639e2b1836" />
+
 
 
 ---
