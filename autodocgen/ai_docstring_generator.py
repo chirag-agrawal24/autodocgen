@@ -2,7 +2,7 @@ import os
 import requests
 from groq import Groq
 from dotenv import  load_dotenv
-
+from autodocgen import GROQ_MODEL
 load_dotenv()
 client = Groq()
 
@@ -15,7 +15,7 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 
-def generate_file_description_ai(code: str, model="meta-llama/llama-4-scout-17b-16e-instruct") -> str:
+def generate_file_description_ai(code: str, model=GROQ_MODEL) -> str:
     if not GROQ_API_KEY:
         return "No description available (GROQ_API_KEY not set)."
 
@@ -38,7 +38,7 @@ def generate_file_description_ai(code: str, model="meta-llama/llama-4-scout-17b-
     return "AI summary failed."
 
 
-def generate_docstring(function_name, args, file_context=None, model="meta-llama/llama-4-scout-17b-16e-instruct"):
+def generate_docstring(function_name, args, file_context=None, model=GROQ_MODEL):
     prompt = f"""
 Generate a concise, readable Python docstring for the following function:
 
@@ -78,7 +78,7 @@ Respond with only the docstring content (no quotes or formatting).
 import os
 import requests
 
-def generate_readme_with_ai(project_path, file_descriptions,model="meta-llama/llama-4-scout-17b-16e-instruct" ):
+def generate_readme_with_ai(project_path, file_descriptions,model=GROQ_MODEL ):
     # Prepare basic input for AI
     file_summary = "\n".join(
         f"- {os.path.relpath(path, project_path)}: {desc}"
