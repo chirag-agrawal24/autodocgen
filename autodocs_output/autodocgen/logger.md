@@ -1,31 +1,26 @@
 # autodocgen/logger.py
 
-> **Simple Logger Class Summary**
+> **Summary of Python File: Simple Logger**
 
-This Python file defines a simple logging class called `SimpleLogger`. The class provides a basic logging functionality that writes log messages to both the console and a file.
+This Python file defines a class `SimpleLogger` that creates a simple logging system. 
 
-**Key Features:**
+### Key Features:
 
-* Creates a logger with a specified name (default: `'my_logger'`)
-* Logs messages to both the console and a file (default file: `'app.log'`)
-* Log level is set to `INFO`
-* Log messages are formatted with a timestamp (`%(asctime)s`) followed by the message
+*   The logger logs messages with an `INFO` level or higher.
+*   Logs are output to both the console and a log file (`app.log` by default).
+*   The log format includes the timestamp (`%(asctime)s`) and the log message (`%(message)s`).
+*   The logger can be customized with a name and log file when creating an instance of `SimpleLogger`.
 
-**Usage:**
+### Usage:
 
-* Create an instance of the `SimpleLogger` class, optionally specifying a logger name and log file.
-* Call the instance like a function, passing a message to be logged.
+To use this logger, you can create an instance of the `SimpleLogger` class and call it with a message. For example:
 
-**Example:**
 ```python
-logger = SimpleLogger('my_app', 'my_app.log')
-logger('This is a log message')
+logger = SimpleLogger()
+logger("This is a log message")
 ```
-This will output:
-```
-2023-12-01 12:00:00,000 - This is a log message
-```
-to both the console and the `my_app.log` file.
+
+This will log the message to both the console and the log file.
 
 
 ---
@@ -40,19 +35,23 @@ No class docstring available.
 - **Arguments**: ['self', 'name', 'log_file']
 - **Returns**: None
 
-Initializes a SimpleLogger instance.
+Initializes a SimpleLogger instance with a specified name and log file.
 
- :param name: The name of the logger (default: 'my_logger')
- :param log_file: The file path for logging (default: 'app.log')
+Args:
+    name (str): The name of the logger, defaults to my_logger.
+    log_file (str): The file where logs will be written, defaults to app.log.
 
 ### Method: `__call__`
 - **Arguments**: ['self', 'message']
 - **Returns**: None
 
-Logs a given message at the INFO level.
+Makes a call to the logger with a given message, utilizing the SimpleLogger instance's configured logging settings. 
 
- :param message: The message to be logged. 
- :return: None
+Args:
+    message (str): The message to be logged by the SimpleLogger instance.
+
+Returns:
+    None
 
 
 

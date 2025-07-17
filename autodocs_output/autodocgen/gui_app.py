@@ -12,6 +12,16 @@ class AutoDocGUI:
     """AutoDocGUI class description."""
 
     def __init__(self, root):
+        """Initialize the object with the root element. 
+
+Args:
+    root: The root element of the object 
+Raises:
+    None
+Returns:
+    None 
+Note:
+    This is a constructor method that is called when an object is instantiated from the class."""
         self.root = root
         self.root.title('🧠 AutoDocGen - GUI')
         self.project_path = tk.StringVar()
@@ -23,6 +33,7 @@ class AutoDocGUI:
         self.setup_ui()
 
     def setup_ui(self):
+        """Initializes and sets up the user interface for the application, handling layout and display components."""
         top_frame = tk.Frame(self.root)
         top_frame.pack(fill='x', padx=10, pady=5)
         tk.Label(top_frame, text='📂 Project Path:').grid(row=0, column=0,
@@ -85,26 +96,31 @@ class AutoDocGUI:
             self.save_final_docstrings).pack(side='right', padx=5)
 
     def browse_project(self):
+        """Browse the current project, allowing the user to navigate and view its contents."""
         path = filedialog.askdirectory()
         if path:
             self.project_path.set(path)
 
     def browse_output(self):
+        """Browses the output when an AI summary fails, allowing for manual review and inspection of the generated content."""
         path = filedialog.askdirectory()
         if path:
             self.output_path.set(path)
 
     def add_ignore_folder(self):
+        """Adds the current folder to the ignore list to prevent it from being summarized in the future"""
         folder = filedialog.askdirectory()
         if folder and folder not in self.ignore_paths:
             self.ignore_paths.append(folder)
             self.ignore_listbox.insert('end', folder)
 
     def clear_ignore_folders(self):
+        """Clears the list of ignored folders in the current repository, allowing them to be reconsidered for analysis and processing."""
         self.ignore_paths.clear()
         self.ignore_listbox.delete(0, 'end')
 
     def generate_docstrings(self):
+        """Generates Python docstrings for classes and functions to provide documentation and readability."""
         from autodocgen.parser import parse_python_files
         from autodocgen.ai_docstring_generator import generate_docstring
         self.tree.delete(*self.tree.get_children())
@@ -126,6 +142,7 @@ class AutoDocGUI:
                     values=(key,))
 
     def on_tree_select(self, event):
+        """Handles tree selection events, updating the application state accordingly based on the selected tree item and the event that triggered the selection."""
         item_id = self.tree.selection()
         if not item_id:
             return
@@ -142,6 +159,7 @@ class AutoDocGUI:
         self.new_doc.insert('1.0', new_doc)
 
     def reject_current_docstring(self):
+        """Rejects the current document summary due to AI summary failure, allowing for further processing or manual intervention."""
         item_id = self.tree.selection()
         if not item_id:
             return
@@ -151,6 +169,7 @@ class AutoDocGUI:
             self.rejected_funcs.add(func_key)
 
     def save_final_docstrings(self):
+        """Saves the final docstrings after the AI summary generation has failed, preserving the original content for further reference or manual editing."""
         for key, func in self.functions.items():
             if key in self.rejected_funcs:
                 continue
@@ -168,6 +187,16 @@ class AutoDocGUI:
         messagebox.showinfo('Success', '✅ Docstrings injected and saved!')
 
     def generate_docs(self, fmt='html'):
+        """Generates documentation in the specified format.
+
+Args:
+    fmt (str): The format of the documentation to be generated.
+
+Returns:
+    None
+
+Notes:
+    The generated documentation will be based on the current state of the object."""
         from autodocgen.parser import parse_python_files
         project = self.project_path.get()
         output = os.path.join(self.output_path.get(), 'project_docs')
@@ -183,6 +212,7 @@ class AutoDocGUI:
             )
 
     def generate_pdf(self):
+        """Generates a PDF document based on the current object state, typically used when an AI summary fails to provide a suitable alternative."""
         output_path = os.path.join(self.output_path.get(), 'project_docs')
         output_html_path = os.path.join(output_path, 'index.html')
         if not os.path.exists(output_html_path):
@@ -197,6 +227,7 @@ class AutoDocGUI:
                 )
 
     def generate_readme(self):
+        """Generates a README file based on the current object's state, providing a summary of its contents and configurations, serving as a fallback when AI-powered summarization fails."""
         from autodocgen.parser import parse_python_files
         project = self.project_path.get()
         output = self.output_path.get()
@@ -215,12 +246,21 @@ class AutoDocGUI:
         preview_label.pack(fill='both', expand=True)
 
         def update_preview():
+            """Updates the preview after an AI summary fails, handling any necessary corrections or adjustments to ensure accurate representation of the data."""
             import markdown
             md_text = text_editor.get('1.0', 'end')
             html = markdown.markdown(md_text, extensions=['fenced_code'])
             preview_label.set_html(html)
 
         def save_readme():
+            """Saves a failed AI summary to a README file for future reference.
+ 
+Args:
+    summary (str): The AI summary that failed.
+    filename (str): The name of the README file to save to.
+ 
+Returns:
+    None"""
             content = text_editor.get('1.0', 'end').strip()
             readme_paths = [os.path.join(project, 'README.md'), os.path.
                 join(output, 'project_docs', 'README.md')]
@@ -241,6 +281,19 @@ class AutoDocGUI:
 
 
 def launch():
+    """Launches an alternative process when AI summary fails.
+
+Args:
+    None
+
+Returns:
+    None
+
+Raises:
+    Exception: If the launch process encounters an error 
+
+Notes:
+    This function is a fallback mechanism for when AI summary generation is unsuccessful."""
     root = tk.Tk()
     app = AutoDocGUI(root)
     root.mainloop()

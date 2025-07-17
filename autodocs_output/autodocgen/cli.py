@@ -5,6 +5,7 @@ from autodocgen.runner import run_documentation_tool
 
 
 def main():
+    """Main entry point of the application, handling the case where AI summary generation has failed."""
     parser = argparse.ArgumentParser(description=
         '📘 Generate documentation from Python source code.')
     subparsers = parser.add_subparsers(dest='command')

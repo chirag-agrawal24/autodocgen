@@ -15,14 +15,20 @@ class DocstringInjector(ast.NodeTransformer):
 
     def __init__(self, file_context='', force=False, show_diff=False,
         in_memory_funcs=None):
-        """Initializes the object with the given parameters.
+        """Initialize the object with the given parameters.
 
-  Args:
-    self: The instance of the class.
-    file_context: The context of the file operation.
-    force: A flag indicating whether to force the operation.
-    show_diff: A flag indicating whether to show the difference.
-    in_memory_funcs: A collection of in-memory functions."""
+Args:
+    self: The instance of the class
+    file_context: The context of the file being processed
+    force: A flag indicating whether to force the operation
+    show_diff: A flag indicating whether to show the difference
+    in_memory_funcs: A list of functions to be executed in memory 
+
+Returns:
+    None 
+
+Raises:
+    None"""
         self.file_context = file_context
         self.force = force
         self.show_diff = show_diff
@@ -31,18 +37,26 @@ class DocstringInjector(ast.NodeTransformer):
         self.modified_code = ''
 
     def get_custom_docstring(self, name):
-        """Returns the custom docstring for the specified attribute name. 
+        """Get a custom docstring for a specified name.
 
-Parameters:
-- self: A reference to the instance of the class
-- name: The name of the attribute to retrieve the custom docstring for"""
+Args:
+    name (str): Name for which the custom docstring is to be retrieved
+
+Returns:
+    str: The custom docstring for the specified name"""
         for f in self.in_memory_funcs:
             if f['name'] == name:
                 return f.get('docstring')
         return None
 
     def visit_FunctionDef(self, node):
-        """Visits a FunctionDef node in the abstract syntax tree, processing its structure and attributes."""
+        """Visits a function definition node in the abstract syntax tree, performing necessary operations on the node and its child nodes. 
+Parameters
+----------
+self : object
+    A reference to the instance of the class this method belongs to
+node : FunctionDef
+    The function definition node being visited"""
         existing_doc = ast.get_docstring(node)
         needs_doc = self.force or not existing_doc
         if not needs_doc:
@@ -60,11 +74,14 @@ Parameters:
         return self.generic_visit(node)
 
     def visit_ClassDef(self, node):
-        """Visits a class definition node and performs necessary actions.
- 
-Parameters
-    self: A reference to the instance of the class
-    node: The class definition node to be visited"""
+        """Visits a class definition node in the abstract syntax tree. 
+
+Args:
+    self: The current instance of the class.
+    node: The class definition node to be visited.
+
+Returns:
+    None"""
         existing_doc = ast.get_docstring(node)
         needs_doc = self.force or not existing_doc
         if needs_doc:
@@ -77,7 +94,16 @@ Parameters
         return node
 
     def inject(self, code):
-        """Injects the provided code into the current object, allowing for dynamic modification of its behavior."""
+        """Injects the provided code into the current context.
+
+Args:
+    code (str): The code to be injected.
+
+Returns:
+    None
+
+Note:
+    This function modifies the current context by injecting the given code."""
         self.original_code = code
         tree = ast.parse(code)
         self.visit(tree)
@@ -85,8 +111,7 @@ Parameters
         return self.modified_code
 
     def show_code_diff(self):
-        """Displays the code difference for the AI summary failure. 
-No arguments are required beyond the instance reference."""
+        """Displays the difference between the expected and actual code when an AI summary fails."""
         if not self.show_diff:
             return
         print('🔍 Diff:')
@@ -99,14 +124,22 @@ No arguments are required beyond the instance reference."""
 
 def inject_into_file(filepath, dest_path=None, force=False, show_diff=False,
     in_memory_funcs=None):
-    """Injects content into a file at a specified filepath and saves it to a destination path.
+    """Injects data into a file at a specified destination path.
 
- Args:
-   filepath (str): Path to the file to inject content into.
-   dest_path (str): Destination path to save the modified file.
-   force (bool): Force the injection even if the destination file exists.
-   show_diff (bool): Display the difference between the original and modified files.
-   in_memory_funcs (list): List of functions to apply to the file content in memory."""
+Args:
+    filepath (str): The path to the file where data will be injected.
+    dest_path (str): The path within the file where data will be injected.
+    force (bool): If True, overwrite existing data without prompting.
+    show_diff (bool): If True, display the differences between the original and modified file.
+    in_memory_funcs (list): A list of in-memory functions to be applied during injection.
+
+Returns:
+    None
+
+Raises:
+    FileNotFoundError: If the file at filepath does not exist.
+    PermissionError: If permission is denied to access or modify the file.
+    ValueError: If the dest_path is invalid or if in_memory_funcs is not a list."""
     with open(filepath, 'r', encoding='utf-8') as f:
         code = f.read()
     file_context = generate_file_description_ai(code

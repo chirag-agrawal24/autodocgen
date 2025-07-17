@@ -1,38 +1,39 @@
 # autodocgen/parser.py
 
-> **Python File Summary**
+> **Summary of Python File**
 
-This Python file appears to be a code parser and analyzer for Python files. Its primary function is to extract information from Python files, including:
+This Python file is a parser for Python source code. It provides functions to extract information from Python files and directories, including:
 
-* Function and class definitions
-* Function arguments and return types
-* Docstrings (or generate them using AI if not present)
-* File descriptions
+* Function definitions with their names, arguments, return types, and docstrings
+* Class definitions with their names, docstrings, and methods
+* File descriptions and summaries using AI-powered tools (optional)
 
-The file provides the following functionality:
+**Key Features**
 
-### Main Features
+1. **Function Parsing**: The `parse_function` function extracts information from function definitions, including:
+	* Function name
+	* Arguments with their annotations (if available)
+	* Return type (if available)
+	* Docstring (if available)
+2. **Class Parsing**: The `parse_class` function extracts information from class definitions, including:
+	* Class name
+	* Docstring (if available)
+	* Methods (parsed using `parse_function`)
+3. **File Parsing**: The `parse_file` function reads a Python file, parses its contents, and extracts information about functions and classes defined in the file.
+4. **Directory Parsing**: The `parse_python_files` function walks through a directory and parses all Python files found, grouping the extracted information by file.
+5. **AI-Powered Summaries**: If AI-powered tools are available (imported from `ai_docstring_generator` module), the parser can generate summaries for files and functions using these tools.
 
-1. **Parsing Python Files**: The `parse_file` function reads a Python file, parses its abstract syntax tree (AST), and extracts information about functions and classes.
-2. **Function and Class Analysis**: The `parse_function` and `parse_class` functions extract information about individual functions and classes, including their names, arguments, return types, and docstrings.
-3. **AI-Powered Docstring Generation**: The file uses AI models (imported from `ai_docstring_generator`) to generate docstrings for functions and file descriptions if they are not present.
-4. **Directory Scanning**: The `parse_python_files` function scans a directory and its subdirectories for Python files, parsing and analyzing each file.
+**Functions and Variables**
 
-### Output
+* `should_ignore`: checks if a file or directory should be ignored based on a list of ignore paths
+* `parse_function`, `parse_class`, `parse_file`, and `parse_python_files`: core parsing functions
+* `group_functions_by_file`: groups functions by their file paths
+* `generate_docstring` and `generate_file_description_ai`: AI-powered tools for generating docstrings and file descriptions (optional)
 
-The file returns a dictionary with the following structure:
+**Error Handling**
 
-* `grouped`: A dictionary where each key is a file path and the value is a list of parsed functions and classes.
-* `file_descriptions`: A dictionary where each key is a file path and the value is a file description (either generated using AI or a default message).
-
-### Utility Functions
-
-The file also provides several utility functions, including:
-
-* `should_ignore`: A function that checks if a path should be ignored based on a list of ignore paths.
-* `group_functions_by_file`: A function that groups functions by their file paths.
-
-Overall, this file seems to be part of a larger project that aims to analyze and understand Python codebases.
+* The parser handles UnicodeDecodeError when reading files.
+* It also catches any exceptions that occur while parsing function annotations or return types.
 
 
 ---
@@ -44,12 +45,12 @@ Overall, this file seems to be part of a larger project that aims to analyze and
 
 Determines whether a given file path should be ignored based on a provided ignore list.
 
- Args:
-  path (str): The file path to check.
-  ignore_list (list): A list of patterns or paths to ignore.
+Args:
+    path (str): The file path to check.
+    ignore_list (list): A list of paths or patterns to ignore.
 
- Returns:
-  bool: True if the path should be ignored, False otherwise.
+Returns:
+    bool: True if the path should be ignored, False otherwise.
 
 
 ---
@@ -59,16 +60,20 @@ Determines whether a given file path should be ignored based on a provided ignor
 - **Arguments**: ['node', 'file_path', 'use_ai', 'context']
 - **Returns**: None
 
-Parses a function and generates a docstring.
+Parse a function node and generate a docstring for it.
 
- Args:
-     node: The node to parse.
-     file_path: The path to the file containing the node.
-     use_ai: Whether to use AI to generate the docstring.
-     context: The context in which to generate the docstring.
+Args:
+    node: The function node to parse, typically an ast.FunctionDef object.
+    file_path: The path to the file containing the function.
+    use_ai: Whether to use AI-generated docstrings if available.
+    context: Additional context for docstring generation.
 
- Returns:
-     A generated docstring for the function.
+Returns:
+    A docstring for the given function node.
+
+Notes:
+    If use_ai is True, the function will attempt to use AI-generated docstrings.
+    The AI-generated docstring functionality requires the ai_docstring_generator module to be available.
 
 
 ---
@@ -78,16 +83,21 @@ Parses a function and generates a docstring.
 - **Arguments**: ['node', 'file_path', 'use_ai', 'context']
 - **Returns**: None
 
-Parses a class from the given node and generates a docstring.
+Parse a class from an abstract syntax tree node.
 
-    Args:
-        node: The node to parse.
-        file_path: The path to the file being parsed.
-        use_ai: Whether to use AI to generate the docstring.
-        context: The context in which the class is being parsed.
+Args:
+    node (ast.Node): The abstract syntax tree node representing the class.
+    file_path (str): The path to the file containing the class.
+    use_ai (bool): Whether to use AI-generated docstrings.
+    context (dict): Additional context for parsing the class.
 
-    Returns:
-        A docstring for the parsed class.
+Returns:
+    None 
+
+Raises:
+    ImportError: If AI docstring generator modules are not found. 
+Note:
+    This function relies on optional AI docstring generation modules.
 
 
 ---
@@ -97,14 +107,18 @@ Parses a class from the given node and generates a docstring.
 - **Arguments**: ['file_path', 'use_ai']
 - **Returns**: None
 
-Parses a file and generates a docstring.
+Parse a file and extract relevant information.
 
- Args:
-     file_path (str): The path to the file to parse.
-     use_ai (bool): Whether to use AI to generate the docstring.
+Args:
+    file_path (str): The path to the file to be parsed.
+    use_ai (bool): Whether to utilize AI-powered parsing tools if available.
 
- Returns:
-     str: The generated docstring.
+Returns:
+    Parsed file information.
+
+Raises:
+    ImportError: If AI-powered parsing tools are not imported correctly.
+    OSError: If the file at the specified path does not exist or cannot be accessed.
 
 
 ---
@@ -114,15 +128,18 @@ Parses a file and generates a docstring.
 - **Arguments**: ['directory', 'use_ai', 'ignore']
 - **Returns**: None
 
-Parses Python files in a directory to extract information and optionally generate docstrings.
+Parse Python files in a specified directory and generate docstrings.
 
-    Args:
-        directory (str): The path to the directory containing Python files to parse.
-        use_ai (bool): A flag indicating whether to use AI for docstring generation.
-        ignore (list): A list of paths or patterns to ignore during parsing.
+Args:
+    directory (str): The path to the directory containing Python files to parse.
+    use_ai (bool): Whether to utilize AI-powered docstring generation.
+    ignore (list): A list of paths or patterns to ignore during parsing.
 
-    Returns:
-        A dictionary or other data structure containing the extracted information.
+Returns:
+    None
+
+Note:
+    This function relies on the ast module for parsing Python files and optionally leverages AI-powered docstring generation if available.
 
 
 ---
@@ -132,11 +149,11 @@ Parses Python files in a directory to extract information and optionally generat
 - **Arguments**: ['functions']
 - **Returns**: None
 
-Group functions by their originating file.
+Groups a list of functions by their corresponding file paths.
 
- Args:
-     functions: A list of functions to be grouped by file.
+Args:
+    functions (list): A list of functions to be grouped.
 
- Returns:
-     A dictionary where keys are file paths and values are lists of functions defined in those files.
+Returns:
+    dict: A dictionary where keys are file paths and values are lists of functions belonging to those files.
 

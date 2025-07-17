@@ -1,4 +1,8 @@
 # autodocgen/__init__.py
 
-> It looks like you haven't provided a Python file for me to summarize. Please paste the code, and I'll do my best to summarize what it does. I'll provide a concise overview of the file's functionality, including any notable functions, variables, or imports.
+> **File Summary**
+
+This Python file defines a single constant variable:
+
+* `GROQ_MODEL`: a string variable set to `"llama-3.3-70b-versatile"`, which appears to be the name of a specific AI model, likely used for natural language processing or other machine learning tasks.
 

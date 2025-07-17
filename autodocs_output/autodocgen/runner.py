@@ -7,6 +7,14 @@ logger = SimpleLogger(name='autodocgen', log_file='autodocgen.log')
 
 
 def should_ignore(path, ignore_list):
+    """Determines whether a given file path should be ignored based on a provided ignore list.
+
+Args:
+    path (str): The file path to check.
+    ignore_list (list): A list of paths or patterns to ignore.
+
+Returns:
+    bool: True if the path should be ignored, False otherwise."""
     return any(os.path.commonpath([path, os.path.abspath(ign)]) == os.path.
         abspath(ign) for ign in ignore_list)
 

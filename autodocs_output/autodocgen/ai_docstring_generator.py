@@ -2,6 +2,7 @@ import os
 import requests
 from groq import Groq
 from dotenv import load_dotenv
+from autodocgen import GROQ_MODEL
 load_dotenv()
 client = Groq()
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
@@ -10,13 +11,18 @@ HEADERS = {'Authorization': f'Bearer {GROQ_API_KEY}', 'Content-Type':
     'application/json'}
 
 
-def generate_file_description_ai(code: str, model=
-    'meta-llama/llama-4-scout-17b-16e-instruct') ->str:
-    """Generate a concise summary of the code using the provided AI model when the initial AI summary attempt fails. 
-Parameters:
-  code (str): The code to be summarized.
-  model: The AI model to be used for generating the summary. 
-Returns: A string describing the code."""
+def generate_file_description_ai(code: str, model=GROQ_MODEL) ->str:
+    """Generates a file description using artificial intelligence based on the provided code and model, serving as a fallback when AI summary generation fails. 
+Parameters
+----------
+code : str
+    The code to generate a description for
+model : str
+    The AI model used for generating the description
+Returns
+----------
+str
+    A generated file description"""
     if not GROQ_API_KEY:
         return 'No description available (GROQ_API_KEY not set).'
     headers = {'Authorization': f'Bearer {GROQ_API_KEY}', 'Content-Type':
@@ -34,18 +40,18 @@ Returns: A string describing the code."""
     return 'AI summary failed.'
 
 
-def generate_docstring(function_name, args, file_context=None, model=
-    'meta-llama/llama-4-scout-17b-16e-instruct'):
-    """Generate a docstring for a given function based on its name, arguments, file context, and model.
+def generate_docstring(function_name, args, file_context=None, model=GROQ_MODEL
+    ):
+    """Generate a Python docstring for a given function.
 
-### Parameters
-- function_name (str): The name of the function to generate a docstring for.
-- args (list): A list of function arguments.
-- file_context (str): The file context in which the function is defined.
-- model (object): The model used for generating the docstring.
+Args:
+    function_name (str): The name of the function to generate a docstring for.
+    args (list): A list of argument names for the function.
+    file_context (str): The file context in which the function is defined.
+    model (object): An AI model used to aid in generating the docstring.
 
-### Returns
-- str: A generated docstring for the specified function."""
+Returns:
+    str: A generated docstring for the specified function."""
     prompt = f"""
 Generate a concise, readable Python docstring for the following function:
 
@@ -70,17 +76,19 @@ import os
 import requests
 
 
-def generate_readme_with_ai(project_path, file_descriptions, model=
-    'meta-llama/llama-4-scout-17b-16e-instruct'):
-    """Generate a README file for a project using AI based on provided file descriptions.
+def generate_readme_with_ai(project_path, file_descriptions, model=GROQ_MODEL):
+    """Generates a README file for a project using AI-powered summarization.
 
- Args:
-     project_path (str): Path to the project directory.
-     file_descriptions (dict): Dictionary of file names and their descriptions.
-     model: AI model used to generate the README summary.
+Args:
+    project_path (str): The path to the project directory.
+    file_descriptions (dict): A dictionary containing file names as keys and their descriptions as values.
+    model: The AI model used for summarization.
 
- Returns:
-     str: The generated README content."""
+Returns:
+    None
+
+Raises:
+    Exception: If AI summarization fails."""
     file_summary = '\n'.join(
         f'- {os.path.relpath(path, project_path)}: {desc}' for path, desc in
         file_descriptions.items())

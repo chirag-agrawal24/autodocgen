@@ -5,11 +5,14 @@ class SimpleLogger:
     """SimpleLogger class description."""
 
     def __init__(self, name='my_logger', log_file='app.log'):
-        """Initializes an instance with the given name and log file.
- 
-Parameters:
+        """Initializes the class instance with a name and log file.
+
+Args:
     name (str): The name of the instance.
-    log_file (str): The path to the log file."""
+    log_file (str): The path to the log file.
+
+Returns:
+    None"""
         self.logger = logging.getLogger(name)
         self.logger.setLevel(logging.INFO)
         self.logger.propagate = False
@@ -24,8 +27,5 @@ Parameters:
             self.logger.addHandler(fh)
 
     def __call__(self, message):
-        """Invokes the instance with a given message when an AI summary fails. 
-Parameters:
-  self: A reference to the instance of the class.
-  message: The message associated with the AI summary failure."""
+        """Handles AI summary failure by processing the provided message, typically triggering an error response or fallback behavior to handle the unsuccessful summarization attempt."""
         self.logger.info(message)

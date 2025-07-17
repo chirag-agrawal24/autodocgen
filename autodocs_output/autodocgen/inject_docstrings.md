@@ -1,33 +1,34 @@
 # autodocgen/inject_docstrings.py
 
-> **Python File Summary: Docstring Injector**
+> **Summary**
 
-This Python file provides a tool for automatically injecting docstrings into Python code. The injector uses the Abstract Syntax Tree (AST) to parse the code, identify functions and classes, and add docstrings.
+This Python script is designed to inject docstrings into Python functions and classes in a given file. The script uses the `ast` module to parse the Python code, and then traverses the abstract syntax tree (AST) to find functions and classes. If a function or class does not have a docstring, the script will generate one using the `generate_docstring` function.
 
-**Key Features:**
+**Key Features**
 
-* **Docstring Generation**: The injector can generate docstrings for functions and classes using AI-powered tools (optional) or simple templates.
-* **Custom Docstrings**: The injector allows providing custom docstrings for specific functions.
-* **Diff Display**: The injector can display a unified diff between the original and modified code.
+1. **Docstring Injection**: The script injects docstrings into functions and classes that do not have one.
+2. **Custom Docstrings**: The script allows for custom docstrings to be provided for specific functions.
+3. **File Context**: The script generates a file-level description using the `generate_file_description_ai` function.
+4. **Diff Display**: The script can display the differences between the original and modified code using the `difflib` module.
+5. **File Overwrite**: The script can overwrite the original file with the modified code, or write the modified code to a new file.
 
-**Main Functionality:**
+**Usage**
 
-1. The `DocstringInjector` class takes in code, file context, and other options (force, show diff, in-memory functions).
-2. It uses the AST to parse the code and visit functions and classes.
-3. For each function or class, it checks if a docstring exists. If not, or if forced, it generates a docstring and adds it to the code.
-4. The modified code is then returned or written to a file.
-
-**Usage:**
-
-The `inject_into_file` function is the main entry point. It takes in:
+The script can be used by calling the `inject_into_file` function, which takes the following parameters:
 
 * `filepath`: The path to the Python file to inject docstrings into.
-* `dest_path`: The destination path to write the modified code (optional).
-* `force`: A flag to force docstring injection, even if existing docstrings are present.
-* `show_diff`: A flag to display a unified diff between the original and modified code.
-* `in_memory_funcs`: A list of custom functions with docstrings.
+* `dest_path`: The path to write the modified code to (optional).
+* `force`: A boolean indicating whether to overwrite existing docstrings (optional).
+* `show_diff`: A boolean indicating whether to display the differences between the original and modified code (optional).
+* `in_memory_funcs`: A list of dictionaries containing custom docstrings for specific functions (optional).
 
-The function reads the file, creates a `DocstringInjector` instance, injects docstrings, and writes the modified code to the destination path. If `show_diff` is True, it displays the diff.
+**Example Usage**
+
+```python
+inject_into_file("path/to/file.py", show_diff=True)
+```
+
+This would inject docstrings into the functions and classes in `file.py`, display the differences between the original and modified code, and overwrite the original file with the modified code.
 
 
 ---
@@ -42,66 +43,79 @@ No class docstring available.
 - **Arguments**: ['self', 'file_context', 'force', 'show_diff', 'in_memory_funcs']
 - **Returns**: None
 
-Initializes the object with the given context and settings.
+Initializes the class with the provided file context and optional parameters to control force overwrite, display differences, and in-memory functions.
 
-    Args:
-        file_context: The context of the file being processed.
-        force: A flag to force certain actions.
-        show_diff: A flag to display differences.
-        in_memory_funcs: A collection of functions stored in memory.
+Args:
+    file_context: The context of the file being processed.
+    force (bool): Whether to force overwriting existing content. Defaults to False.
+    show_diff (bool): Whether to display the differences. Defaults to False.
+    in_memory_funcs: In-memory functions to be utilized.
 
-    Note:
-        AI-powered docstring generation is attempted but may not be available.
+Returns:
+    None
 
 ### Method: `get_custom_docstring`
 - **Arguments**: ['self', 'name']
 - **Returns**: None
 
-Get a custom docstring for a given function or variable name.
+Get a custom docstring for a given function name, utilizing AI generation if available or a fallback description otherwise. 
 
- Parameters
- ----------
- name : str
-     The name of the function or variable.
+Args:
+    name (str): The name of the function for which to generate the docstring.
 
- Returns
- -------
- str
-     A custom docstring for the given name. If AI is unavailable, returns a default docstring.
+Returns:
+    str: A docstring describing the function.
 
 ### Method: `visit_FunctionDef`
 - **Arguments**: ['self', 'node']
 - **Returns**: None
 
-Visits a FunctionDef node and generates a docstring for it. 
- Parameters:
-     node: The FunctionDef node to visit. 
- Returns:
-     None
+Visit a function definition node in the abstract syntax tree and perform necessary operations.
+
+Args:
+    node (ast.FunctionDef): The function definition node to visit
+
+Returns:
+    None 
+
+Note: This function appears to be part of a class due to the self parameter, likely used in an Abstract Syntax Tree traversal context.
 
 ### Method: `visit_ClassDef`
 - **Arguments**: ['self', 'node']
 - **Returns**: None
 
-Visits a ClassDef node and generates a docstring for it. 
-No arguments are processed, only the node itself.
+Visit a ClassDef node in the abstract syntax tree, generating documentation as needed.
+
+Args:
+    node: The ClassDef node to visit
+    self: A reference to the current instance of the class 
+
+Returns:
+    None
 
 ### Method: `inject`
 - **Arguments**: ['self', 'code']
 - **Returns**: None
 
-Injects provided code into the current object, 
-          generating a docstring based on the function name, 
-          arguments, and context if available.
+Injects code into a specific context, providing a flexible way to modify or extend existing functionality.
+
+Args:
+    code (str): The code to be injected.
+
+Returns:
+    None
+
+Notes:
+    This function utilizes the ast and astor libraries for code manipulation and the difflib library for comparing code differences. 
+
+Raises:
+    Exception: If an error occurs during code injection.
 
 ### Method: `show_code_diff`
 - **Arguments**: ['self']
 - **Returns**: None
 
-Displays the code difference between the current and original versions of a file, 
- highlighting changes made to the code. 
-
- No arguments required.
+Displays the difference in code, likely generated from AI or other sources, and the original code, allowing comparison and review of changes made.
 
 
 
@@ -113,15 +127,18 @@ Displays the code difference between the current and original versions of a file
 - **Arguments**: ['filepath', 'dest_path', 'force', 'show_diff', 'in_memory_funcs']
 - **Returns**: None
 
-Injects a generated docstring into an existing Python file.
+Injects content into a file at a specified destination path.
 
- Args:
-     filepath (str): Path to the Python file to inject docstring into.
-     dest_path (str): Destination path to write the updated file.
-     force (bool): Overwrite destination file if it already exists.
-     show_diff (bool): Display a diff of changes before writing to file.
-     in_memory_funcs (dict): Functions to process in-memory.
+Args:
+    filepath (str): The path to the file to modify.
+    dest_path (str): The path within the file where the content will be injected.
+    force (bool): Whether to force the injection without prompting for confirmation.
+    show_diff (bool): Whether to display a diff of the changes made to the file.
+    in_memory_funcs (dict): A dictionary of in-memory functions to be used during injection.
 
- Returns:
-     None
+Returns:
+    None
+
+Note:
+    This function modifies the target file in-place. Use with caution.
 

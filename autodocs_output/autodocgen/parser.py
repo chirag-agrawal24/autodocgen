@@ -9,27 +9,29 @@ except ImportError:
 
 
 def should_ignore(path, ignore_list):
-    """Determines if a given path should be ignored based on a provided ignore list.
-
+    """Determines whether a given file path should be ignored based on a list of ignore patterns.
+ 
 Args:
-  path (str): The file or directory path to check.
-  ignore_list (list): A list of paths or patterns to ignore.
-
+    path (str): The file path to check.
+    ignore_list (list): A list of patterns to ignore.
+ 
 Returns:
-  bool: True if the path should be ignored, False otherwise."""
+    bool: True if the path should be ignored, False otherwise."""
     return any(os.path.commonpath([path, os.path.abspath(ign)]) == os.path.
         abspath(ign) for ign in ignore_list)
 
 
 def parse_function(node, file_path, use_ai=False, context=''):
-    """Parses a node based on the provided file path and context. 
-If use_ai is enabled, attempts to leverage AI for summary; 
-falls back on alternative parsing method if AI summary fails. 
-Parameters:
-  node: Node to be parsed
-  file_path: Path to the file associated with the node
-  use_ai: Flag to indicate whether AI summary is enabled
-  context: Context in which the node is being parsed"""
+    """Parse a function node from an abstract syntax tree and generate a summary based on provided context and optionally utilizing artificial intelligence.
+
+Args:
+    node: The function node from the abstract syntax tree to parse.
+    file_path: The path to the file containing the function.
+    use_ai: Flag indicating whether to utilize artificial intelligence for summary generation.
+    context: Contextual information to aid in summary generation.
+
+Returns:
+    A summary of the function node based on the provided context and AI usage."""
     args = []
     for arg in node.args.args:
         annotation = None
@@ -54,10 +56,19 @@ Parameters:
 
 
 def parse_class(node, file_path, use_ai=False, context=''):
-    """Parses a class from the given node, located at file_path, 
-optionally leveraging AI if use_ai is True, within the provided context. 
-Returns a parsed representation of the class. 
-Raises an exception if AI summary fails and use_ai is True."""
+    """_parses a class node and returns relevant information
+
+Args:
+    node: The class node to be parsed.
+    file_path: The path to the file where the class is defined.
+    use_ai: Flag indicating whether to use AI for parsing.
+    context: The context in which the class is being parsed.
+
+Returns:
+    Parsed class information.
+
+Raises:
+    Exception: If AI summary fails._"""
     methods = []
     for item in node.body:
         if isinstance(item, ast.FunctionDef):
@@ -69,14 +80,14 @@ Raises an exception if AI summary fails and use_ai is True."""
 
 
 def parse_file(file_path, use_ai=False):
-    """Parses a file and generates a summary, with optional AI-powered enhancement.
- 
- Args:
-     file_path (str): The path to the file to be parsed.
-     use_ai (bool): A flag indicating whether to use AI for summary enhancement.
+    """Parse a file and return its contents, optionally using AI to generate a summary if use_ai is True.
 
- Returns:
-     str: A summary of the file content."""
+Args:
+    file_path (str): The path to the file to be parsed.
+    use_ai (bool): Whether to use AI to generate a summary of the file contents. 
+
+Returns:
+    The parsed file contents, or a summary if use_ai is True."""
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             source = f.read()
@@ -94,12 +105,12 @@ def parse_file(file_path, use_ai=False):
 
 
 def parse_python_files(directory, use_ai=False, ignore=[]):
-    """Parses Python files in the specified directory, utilizing AI optionally.
+    """Parse Python files in a specified directory, optionally utilizing AI for summary generation and ignoring certain files.
 
 Args:
-    directory (str): The directory containing Python files to parse.
-    use_ai (bool): A flag indicating whether to use AI for parsing.
-    ignore (list): A list of files or directories to ignore during parsing.
+    directory (str): The path to the directory containing Python files to be parsed.
+    use_ai (bool): If True, use AI to generate summaries for the Python files.
+    ignore (list): A list of file names or patterns to be ignored during parsing.
 
 Returns:
     None"""
@@ -122,13 +133,13 @@ Returns:
 
 
 def group_functions_by_file(functions):
-    """Groups the provided functions by their respective file of origin.
+    """Organizes a list of functions by their respective source files.
 
- Args:
-     functions: A list or iterable of functions to be grouped by file.
+Args:
+    functions (list): A list of function objects or their names, each associated with a source file.
 
- Returns:
-     A dictionary where keys are file names and values are lists of functions defined in those files."""
+Returns:
+    dict: A dictionary mapping source file names to lists of functions defined within those files."""
     grouped = defaultdict(list)
     for func in functions:
         grouped[func['file']].append(func)
